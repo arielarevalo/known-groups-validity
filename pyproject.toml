@@ -1,0 +1,88 @@
+[project]
+name = "cv"
+version = "0.1.0"
+description = "Code and results for: Known-groups validity is not enough for evaluation-awareness detectors"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.0",
+    "datasets>=2.0",
+    "omegaconf>=2.3",
+    "python-dotenv>=1.0",
+    "requests>=2.31",
+    "numpy>=1.25",
+    "scipy>=1.11",
+    "wandb>=0.17",
+    "weave>=0.51",
+    "modal>=0.64",
+    "wandb-workspaces>=0.4.3",
+    "plotly>=5.20",
+    "kaleido>=0.2",
+    "scikit-learn>=1.9.0",
+    "jaxtyping>=0.3.11",
+]
+
+[project.optional-dependencies]
+dev = [
+    "marimo>=0.23.9",
+    "pytest>=8.0",
+    "ruff>=0.16.6",
+]
+# White-box / probe phase (the experiment, self-hosted on Modal GPUs): pulled only
+# when self-hosting targets for activation capture + linear probes. vLLM + torch run
+# GPU-side inside the Modal image (cv/serving/local/app.py), NOT locally; these
+# locals are for offline probe analysis on the captured activations.
+probe = ["torch>=2.2", "transformers>=4.44"]
+
+# Entry points: thin orchestration modules in src/ (beside the cv package, not
+# inside it), each calling into cv. Installed as console scripts (`uv run cv-*`);
+# the testable logic stays in cv, so these carry nothing to test.
+[project.scripts]
+cv-generate = "generate:main"
+cv-validate = "validate:main"
+cv-status = "status:main"
+cv-judge2 = "judge2:main"
+cv-deploy-command = "deploycmd:main"
+cv-whitebox = "whitebox:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+# Default suite: tests/unit -- fast, free, offline, mirrors src/. The e2e tier
+# (tests/e2e) runs the entry points against real OpenRouter + W&B (a few cents, self-
+# cleaning) and is opt-in: run it explicitly with `pytest tests/e2e`. importlib import
+# mode keeps same-named mirror files (unit + e2e both have test_generate.py) collidable-
+# free if ever collected together.
+testpaths = ["tests/unit"]
+addopts = "-q --import-mode=importlib"
+markers = [
+    "e2e: end-to-end test hitting real OpenRouter + W&B (opt-in, costs a few cents; self-cleaning)",
+]
+
+# src layout: the cv package + the top-level entry modules in src/, all installed.
+[tool.setuptools]
+package-dir = { "" = "src" }
+py-modules = ["generate", "validate", "status", "judge2", "deploycmd", "whitebox"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cv = ["prompts/*.txt"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+# Pyflakes and pycodestyle errors, import order, modern syntax, bugbear, and the trailing
+# comma on every multi-line construct. `ruff check --fix` then `ruff format` reproduce the
+# layout. Applied to src/cv/whitebox, src/whitebox.py and tests/unit/cv/test_whitebox.py so far.
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "RUF", "COM812", "PLC0415"]
+
+[tool.ruff.lint.per-file-ignores]
+# Modal code imports the packages that exist only in the container image inside the
+# function body or `@modal.enter` (Modal guide, "Images: What if I have different Python
+# packages locally and remotely?"; "Lifecycle functions: @modal.enter").
+"src/cv/serving/local/app.py" = ["PLC0415"]

@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use this repository, cite it and the EvalAwareBench benchmark it runs."
+title: "Known-groups validity is not enough for evaluation-awareness detectors"
+type: software
+authors:
+  - family-names: "Arevalo-Alvarado"
+    given-names: "Ariel"
+  - family-names: "Badilla-Olivas"
+    given-names: "Antonio"
+date-released: 2026-10-25
+license: MIT
+repository-code: "https://github.com/arielarevalo/known-groups-validity"
+references:
+  - type: article
+    title: "Decomposing and Measuring Evaluation Awareness"
+    authors:
+      - family-names: "Li"
+        given-names: "Changling"
+      - family-names: "Zhang"
+        given-names: "Terry Jingchen"
+      - family-names: "Zhang"
+        given-names: "Jie"
+      - family-names: "Jin"
+        given-names: "Zhijing"
+      - family-names: "Tramèr"
+        given-names: "Florian"
+      - family-names: "Abdelnabi"
+        given-names: "Sahar"
+      - family-names: "Andriushchenko"
+        given-names: "Maksym"
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2605.23055"
+    notes: "The EvalAwareBench benchmark (CC BY-NC 4.0) and the text detectors this study runs."
+  - type: article
+    title: "Steering Evaluation-Aware Language Models to Act Like They Are Deployed"
+    authors:
+      - family-names: "Hua"
+        given-names: "Tim Tian"
+      - family-names: "Qin"
+        given-names: "Andrew"
+      - family-names: "Marks"
+        given-names: "Samuel"
+      - family-names: "Nanda"
+        given-names: "Neel"
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2510.20487"
+    notes: "The method reference for the activation probe: the eval direction and the contrastive prompt pairs."

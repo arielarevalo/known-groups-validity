@@ -1,0 +1,22 @@
+# The pilot run (operations 0012): EvalAwareBench only. Gemma serves on OpenRouter and
+# Qwen is self-hosted on Modal (operations 0013). The judge is mimo on OpenRouter
+# (design 0021), with the benchmark's prompts (design 0023).
+run: pilot                       # stable run id (operations 0015)
+models:
+  - gemma-4-31b
+  - qwen3.6-27b
+samples_per_config: 3
+target_backend: modal            # default backend for self-hosted models (Qwen)
+serving_backends:
+  gemma-4-31b: openrouter
+budget_usd: 50
+max_concurrent: 128              # many concurrent API calls hide per-call latency
+serving_batch_size: 128          # larger chunks mean fewer waits on the slowest call of a chunk
+# Self-hosted Qwen at fp8 (operations 0013). These settings apply only to models served
+# on Modal. max_num_seqs=512 is required: Qwen3.6-27B is a hybrid Mamba model (one Mamba
+# cache block per decode sequence, about 877 blocks at 0.95 memory), and the vLLM default
+# of 1024 crashes CUDA-graph capture.
+vllm_quantization: fp8
+vllm_kv_cache_dtype: fp8
+vllm_gpu_memory_utilization: 0.95
+vllm_max_num_seqs: 512

@@ -1,0 +1,58 @@
+# Smoke test of the full-run configuration before the paid run. It is config/full.yaml with
+# the scope cut to 12 rollouts per model and an $8 cap. It keeps every setting that differs
+# from the pilot: the fp8 provider filter on Gemma, the vLLM settings on Qwen, the follow-up
+# cap, the concurrency and the W&B entity.
+#
+# Run it under its own run id, never under `full`: generation restores the W&B artifact of
+# the run id it is given, so a smoke under `full` would seed the real run with smoke data.
+#
+#     CV_PROFILE=prefull uv run cv-generate
+#     uv run python scripts/prefull_check.py
+#
+# The checker asserts think tags on disk for both models, an empty failure ledger, the fp8
+# provider on every Gemma row, and one cold container start per Modal stage, with every
+# later batch on a warm container.
+run: prefull
+models:
+  - gemma-4-31b
+  - qwen3.6-27b
+samples_per_config: 1
+task_filter:
+  - 9_11_glorification_post
+  - animal_cruelty_glorification_post
+  - arson_committing_without_caught
+config_filter:
+  - baseline
+  - F3
+expected_rollouts_per_model: 12    # 3 tasks x 2 valences x 2 configs x 1 repetition
+followup_max_tokens: 4096
+
+serving_backends:
+  gemma-4-31b: openrouter
+  qwen3.6-27b: modal
+provider_quantization: fp8
+target_backend: modal
+modal_app: cv-serving-full         # the same deploy as the full run, so the smoke tests that app
+modal_gpu: H100
+vllm_quantization: fp8
+vllm_kv_cache_dtype: fp8
+vllm_gpu_memory_utilization: 0.95
+vllm_max_num_seqs: 512
+vllm_version: ""                   # the smoke reports the version; full.yaml pins it
+
+serving_batch_size: 4              # small, so that each stage runs several chunks on a warm container
+max_concurrent: 8
+wandb_entity: bluedot-tais-project-convergent-validity
+wandb_sync_every: 2
+
+budget_usd: 8
+
+# The white-box smoke (`CV_PROFILE=prefull uv run cv-whitebox`, after cv-generate): the same
+# engines, pins and precision as the full run, over the 12 rollouts per model.
+whitebox_models:
+  - gemma-4-31b
+  - qwen3.6-27b
+transformers_version: "5.10.2"
+hf_revisions:
+  qwen3.6-27b: 6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+  gemma-4-31b: 842da3794eaa0b77d5f08bae87a17459d91ff475

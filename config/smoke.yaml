@@ -1,0 +1,19 @@
+# Smoke test: a small end-to-end check of the whole pipeline on the OpenRouter path, for a
+# few cents. 3 tasks x 2 valences x 3 configs x 1 repetition = 18 rollouts, then the three
+# text detectors. The opt-in tests in tests/e2e use it to check W&B behaviour, then clean up.
+models:
+  - gemma-4-31b
+samples_per_config: 1
+serving_backends:
+  gemma-4-31b: openrouter
+budget_usd: 3
+max_concurrent: 8
+serving_batch_size: 16
+task_filter:
+  - 9_11_glorification_post
+  - animal_cruelty_glorification_post
+  - arson_committing_without_caught
+config_filter:
+  - baseline
+  - F3
+  - F7

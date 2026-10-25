@@ -1,0 +1,182 @@
+# 0015. A consumable W&B surface: one canonical run, computed pieces from the notebook, prose report drafted with AI assistance
+
+- **Status:** Accepted (Decision §3 refined by `operations 0017`: the report's figure
+  panels reference static `Report/*` image keys, not the interactive `Figures/*`
+  plotly, which W&B cannot render cleanly in a report panel)
+- **Date proposed:** 2026-06-14
+- **Date accepted:** 2026-06-14
+- **Amends:** `operations 0014` (the consumer-facing W&B surface and the run-id
+  convention it set out), `operations 0009` (the artifact ledger lives on the same
+  canonical run), `operations 0001` (W&B Reports are now produced, not deferred).
+
+> **Naming note (2026-06-21):** the canonical run this record calls `cv-subset` is now
+> **`cv-pilot`** (the *subset* run was renamed *pilot* to escape a wedged W&B run id). The
+> "subset" name is kept here as historical record; the live config, data dirs, scripts and
+> reports use `pilot`. See `docs/STATUS.md`.
+
+## Context
+
+`operations 0014` section 4 made the W&B run the dashboard: the pipeline writes
+`Operations/*`, the notebook writes `Results/*` plus figure panels, latest-wins on the stable
+`cv-<run_id>` run. In practice the W&B project drifted back into a raw-storage
+dropbox for three separable reasons.
+
+First, the canonical `subset` experiment was split across two runs: a dated
+generation run (`cv-subset-2026-06-12`) that carried the raw-data artifact, and a
+separate analysis run that carried the figures. That split predated the stable-id
+convention `operations 0014` section 5 settled (`subset`, not `subset-<date>`); it
+was unintended, not a design, and it means a reader has to stitch two
+runs together to see one experiment.
+
+Second, the analysis outputs that did land on W&B were not browsable as results:
+figures were attached in a form that does not render as a panel, tables existed
+only as the notebook's in-memory DataFrames, and there was no saved workspace view,
+so "open the run and read the result" did not work.
+
+Third, `operations 0001` listed "curated views persisted as W&B Reports" as a
+benefit, and `operations 0014` section 4 then deferred Reports ("No W&B Reports for
+now"). Nothing produced the one consumable a non-author actually opens: a short
+results-and-conclusions brief. The fuller `SUBSET_WRITEUP.md`
+(`reports/subset/`) exists, but it carries motivation, methods, and design
+context; it is not the results-only brief, and it is not on the dashboard.
+
+Finally, run selection had an implicit fallback: `config.run_id()` returned the
+profile stem when neither `use_run()` nor `CV_RUN` was set
+(`src/cv/config.py:82`), so publishing could silently target a run named after the
+profile rather than the experiment.
+
+## Decision
+
+Make the canonical run the single consumable surface, and split its production
+cleanly into the deterministic part (the notebook) and the judgment part (a reviewed, AI-assisted draft).
+
+**1. One canonical run per experiment.** A single stable W&B run, `cv-<run_id>`
+(id e.g. `cv-subset`), holds **both** the raw-data artifact (via
+`WandbTracker.checkpoint()`, the `operations 0009` ledger) **and** every analysis
+piece. The old generation-run / analysis-run split is consolidated onto this one
+run; the dated `cv-subset-2026-06-12` run is retired. `WandbTracker` already keys
+its run on `cv-<run_id>` with `resume="allow"`
+(`src/cv/observability.py:148`), so the pipeline, the notebook, and the publish
+helper all reattach to the same run.
+
+**2. The notebook publishes the computed pieces, programmatically and
+latest-wins, under human run-page sections.** `notebooks/analysis.py` writes
+everything that is a deterministic function of the run's data: figures as rendered
+media panels (`Figures/*`), results tables as `wandb.Table` (`Tables/*`), scalar
+metrics (`Results/*`), and the run config (the pipeline writes `Operations/*`). The
+W&B workspace groups run-page panels by the key's first segment, so **the key prefix
+IS the section name**: human prefixes (`Results`, `Figures`, `Tables`, `Operations`)
+mean the dashboard comes out the right shape at publish time, with **no post-hoc
+workspace-fixing script** (a separate fix-up pass would be unacceptable: the shape
+must be correct from the first run). Re-running the notebook overwrites these in
+place, so the live dashboard always reflects the latest analysis.
+
+**3. The report itself is prose, drafted with AI assistance and reviewed, not produced by code.** The
+consumable report is a **results-and-conclusions brief**: the statistical analysis
+(d', kappa, CIs), the convergent-matrix reading, and an honest statement of scope,
+**results-only**. It is its own artifact, **not** a clone of `SUBSET_WRITEUP.md`
+(which also carries motivation and methods). Because the brief requires judgment
+(what to foreground, how to phrase a null result honestly), it is **not** a
+deterministic script and **not** notebook output: if it could be generated by the
+notebook, it would be. The brief is drafted with an AI writing assistant and
+reviewed by the authors before publishing. Only the mechanical step,
+create-or-update the W&B Report object from given blocks, lives in code, as
+`cv.report_publish.publish(run_id, blocks)`; that helper writes **no prose**, it
+ships blocks the drafting step assembled (markdown interleaved with panel references to the
+run's `Figures/*` keys). The deterministic-vs-prose boundary is
+explicit: **notebook = computed pieces; reviewed draft = prose.**
+
+The drafting step writes the report as a **tracked PEP 723 script** at
+`scripts/reports/<run>.py` (the report-as-code, version-controlled and reviewable in
+git) and runs it, then confirms the render visually via a view-only share link. Two
+mechanics matter. First, the W&B Reports API is broken on the pipeline's wandb 0.27.1
+(its reports auth fails with "relogin required"); wandb 0.21.0 works, so the script
+pins `wandb==0.21.0` in its PEP 723 header and runs isolated via
+`uv run --no-project` (a tiny env, since `cv/__init__` is empty and the helper only
+pulls `cv.config`). Second, **result tables go in the report as markdown**, not as
+live table panels: W&B's table panel renders small, column-clipped, and labelled with
+the raw key, so a markdown table is the readable choice; figures stay live, full-width
+media panels with the runset selector hidden.
+
+**4. Run selection is explicit, with no defaults.** `config.run_id()` raises when
+the run is unset; the profile-stem fallback is removed. The run may be named by an
+explicit `run` config field, by the `CV_RUN` env var, or by `config.use_run()`
+in-process. The notebook funnels an explicit `--run-id` (`mo.cli_args()`) into
+`config.use_run()` with no hardcoded default, so publishing can never silently
+target the wrong run.
+
+## Alternatives considered
+
+- **Keep figures in `run.summary` as raw image values (the pre-0015 state).** Lost:
+  they do not render as browsable panels, so the run page is not readable as a
+  result. Media panels (`Figures/*`) and `wandb.Table` (`Tables/*`) render.
+- **Generate the report with a deterministic script or as notebook output.** Lost:
+  the report is prose that needs judgment; a script can shape numbers into a table
+  but cannot decide what to foreground or how to phrase a null result honestly. If
+  it were not prose we could generate it with the notebook; it is, so we cannot.
+- **Keep the two-run split (generation run + analysis run).** Lost: a reader has to
+  stitch two W&B runs to see one experiment, and the artifact ledger and the
+  analysis end up on different runs. One canonical `cv-<run_id>` run is the
+  consumable; this was the `operations 0014` section 5 convention all along, the
+  split was unintended.
+- **Reuse `SUBSET_WRITEUP.md` as the W&B Report.** Lost: that write-up is the fuller
+  motivation + methods + results document; the dashboard consumable is results-only.
+  Cloning it would put the wrong artifact on the run and couple two documents.
+- **Put the prose-writing logic in `cv` too.** Lost: prose is not deterministic, so
+  it does not belong in a tested module. `cv.report_publish` stays the thin,
+  no-prose, mechanical publisher; the drafting step owns the writing.
+- **Keep the profile-stem fallback for `run_id()`.** Lost: a missing run silently
+  resolves to the profile name, so a publish can target a run nobody meant. An
+  explicit error is safer for a surface people read.
+
+## Consequences
+
+### Enables
+
+- One link is the experiment: `cv-<run_id>` carries the raw-data artifact, the
+  `Results/*` scalars, the `Figures/*` panels, the `Tables/*` tables (all under human
+  run-page sections), and the prose W&B Report. A non-author opens one run and reads
+  the result.
+- Re-running `notebooks/analysis.py` refreshes the computed pieces in place
+  (latest-wins on the stable id), so the dashboard never goes stale against the
+  current analysis.
+- The prose deliverable has a home and a producer: `generate-report` writes it,
+  `cv.report_publish.publish` ships it, both keyed to the same run.
+
+### Forbids / constrains
+
+- `cv.report_publish` must write **no prose**: it only assembles caller-supplied
+  blocks into the Report object. Any prose in code is a layering violation.
+- Publishing without an explicit run is an error: `config.run_id()` raises when
+  unset, so every publish path (`CV_RUN`, `run` config field, `use_run()`,
+  `--run-id`) names the run on purpose.
+- The W&B Report is results-only and must not absorb `SUBSET_WRITEUP.md`'s
+  motivation/methods; the two stay distinct artifacts.
+
+### Risks
+
+- Latest-wins means a re-run with a regression silently overwrites a good
+  dashboard. Mitigation: the raw-data artifact is versioned (`operations 0009`), so
+  the inputs are recoverable; only the derived view is overwritten.
+- The drafting step is human-in-the-loop, so the Report can lag the computed pieces
+  after a re-run. Acceptable: the `Results/*` surface is always current; the prose is
+  refreshed on demand.
+
+## References
+
+- `operations 0014` (the three-tier architecture and the `Operations/*` / `Results/*`
+  surface this completes; run-id convention amended here), `operations 0009` (the
+  `cv-results-<run_id>` artifact ledger, now on the same canonical run),
+  `operations 0001` (W&B Reports, deferred there and produced here).
+- `src/cv/observability.py`: `WandbTracker` (`cv-<run_id>`, `resume="allow"`,
+  `checkpoint`, `experimental_summary`, `figures`, `tables`); the human-section
+  key scheme (`Results/`, `Figures/`, `Tables/`, `Operations/`) lives here.
+- `src/cv/report_publish.py`: the mechanical, no-prose `publish(run_id, blocks)`
+  and the block-builder helpers (`markdown`, `figure_panel`, `table_panel`).
+- `notebooks/analysis.py`: publishes the computed pieces (`Results/*`, `Figures/*`,
+  `Tables/*`, config) under human run-page sections.
+- `scripts/reports/<run>.py`: the tracked PEP 723 report-as-code the drafting step writes and
+  runs (pins `wandb==0.21.0` for the reports API).
+- `src/cv/config.py`: `run_id()` (no-default, raises when unset), `use_run()`, the
+  `run` config field; `results_root()` for where the run dir lives
+  (`operations 0016`).

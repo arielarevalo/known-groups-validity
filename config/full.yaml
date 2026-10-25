@@ -1,0 +1,77 @@
+# The full run (operations 0021). Gemma's text detectors run on OpenRouter, restricted to
+# fp8 providers. Qwen is self-hosted on Modal at fp8. Both models generate at fp8.
+# The costed budget is in operations 0019 and operations 0021.
+run: full                        # stable run id (operations 0015); generation, detectors and
+                                 # the notebook all write to the run `full`
+models:
+  - gemma-4-31b
+  - qwen3.6-27b
+samples_per_config: 3            # repetitions per cell (design 0014)
+followup_max_tokens: 4096        # self-report and third-person follow-ups; the 2048 default
+                                 # cut long answers in the pilot (operations 0019)
+
+# Serving per model (operations 0013)
+serving_backends:
+  gemma-4-31b: openrouter        # per-token output is cheap on the API
+  qwen3.6-27b: modal             # self-hosting is cheaper for Qwen's long outputs
+
+# Route Gemma only to fp8 providers, for the same precision as the self-hosted Qwen.
+provider_quantization: fp8
+
+# Self-hosted Qwen at fp8. vLLM quantizes at load time (no offline calibration, operations 0013).
+target_backend: modal
+# The full run's own Modal app, so that no other deploy is used by mistake. Deploy with:
+#     CV_PROFILE=full uv run cv-deploy-command
+modal_app: cv-serving-full
+modal_gpu: H100                  # Qwen 27B at max_model_len 16384 fits one H100
+vllm_quantization: fp8
+vllm_kv_cache_dtype: fp8
+vllm_gpu_memory_utilization: 0.90  # 0.95 left too little free memory for a prefill transient
+                                 # in the linear-attention kernel (CUDA out of memory). 0.90
+                                 # keeps about 4 GiB free. It affects memory only, not outputs.
+vllm_max_num_seqs: 512           # required: Qwen3.6-27B is a hybrid Mamba model, and the vLLM
+                                 # default crashes CUDA-graph capture (one Mamba cache block per sequence)
+vllm_version: "0.22.1"           # the preflight refuses a deployed engine on any other version
+
+# W&B: the entity is pinned, so the run cannot land in a personal default workspace.
+wandb_entity: bluedot-tais-project-convergent-validity
+wandb_sync_every: 4              # checkpoint upload cadence, in chunks (0 = final sync only)
+
+# Concurrency at which the budget's throughput was measured (operations 0019). The schema
+# defaults (64 / 10) would use a fraction of the engine's capacity.
+serving_batch_size: 256          # samples per Modal batch; self-report and third-person send two requests per sample
+max_concurrent: 128              # OpenRouter concurrency (Gemma and the CoT judge)
+
+# Experiment B (design 0029; src/cv/stacking.py): stacked cues on 25 tasks per valence
+# (50 items). min(10, C(7,k)) draws over F1 to F7 for each k = 2 to 7; F8 is never stacked.
+# That gives 48 configurations per item: 50 x 48 x 3 = 7,200 rollouts per model.
+stack_tasks_per_valence: 25
+stack_max_per_k: 10
+stack_seed: 0                    # the rollout file records the seed, the tasks and the draws
+
+# The white-box pass (design 0018, design 0028; src/cv/whitebox): re-encode on the same app,
+# at the generation precision (fp8). Under fp8 the engine keeps the head and every linear
+# layer that does not tile in 128 x 128 blocks in bf16, and reports the list (design 0032).
+# The paper excludes Gemma's white-box detectors, because many Gemma rollouts gave
+# non-finite activations.
+whitebox_models:
+  - gemma-4-31b
+  - qwen3.6-27b
+whitebox_layer_stride: 4
+whitebox_chunk: 32
+whitebox_batch_tokens: 16384
+logit_sentence: "The user might be testing"
+logit_max_positions: 8
+transformers_version: "5.10.2"   # 5.16.1 crashes the fp8 quantizer on a dense model
+hf_revisions:                    # each engine loads and reports the pin; the preflight refuses a mismatch
+  qwen3.6-27b: 6a9e13bd6fc8f0983b9b99948120bc37f49c13e9   # the build that generated Qwen's text
+  gemma-4-31b: 842da3794eaa0b77d5f08bae87a17459d91ff475   # used for the re-encode only
+
+# Scope check: 5,400 (Experiment A) + 7,200 (Experiment B) per model. The rollout refuses to
+# start on a mismatch, before the first paid call.
+expected_rollouts_per_model: 12600
+
+budget_usd: 300                  # hard meter cap; costed worst case $274 (scripts/full_run_budget.py,
+                                 # operations 0021). The meter counts API tokens and GPU seconds.
+                                 # Also set a Modal workspace spend cap in the dashboard: the in-run
+                                 # cap does not see a raw `modal run` or `modal deploy`.

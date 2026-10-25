@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.ty_cache/
+logs/
+*.log
+.env
+.pilot_committed
+*.egg-info/
+build/
+wandb/
+
+# Working tree (operations 0016): all run outputs live under data/ and are
+# disposable; durable copies live in W&B (the artifact ledger, operations 0009).
+# Tracked deliverables/inputs live OUTSIDE data/: reports/, scripts/.
+data/
+
+# marimo session/state cache (regenerated per run)
+notebooks/__marimo__/
+
+# browser screenshots (throwaway visual-verification captures)
+.browser-sessions/
+.DS_Store
+.pytest_cache/

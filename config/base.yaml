@@ -1,0 +1,30 @@
+# Shared defaults for every run profile. A profile (config/<name>.yaml, selected
+# by $CV_PROFILE) overrides a subset of these. src/cv/config.py loads them with
+# OmegaConf: schema defaults <- base.yaml <- profile <- optional dotlist.
+#
+# Secrets do not belong here. The OpenRouter key and the Hugging Face token stay in
+# the gitignored root .env and are read from the environment. If a value needs a
+# secret, reference it with ${oc.env:VAR}; snapshots dump with resolve=False, so the
+# reference (not the secret) is written.
+
+# Targets (each key must exist in TARGET_MODELS in src/cv/config.py)
+models:
+  - gemma-4-31b
+  - qwen3.6-27b
+
+# Scope (empty filter = no restriction)
+samples_per_config: 3   # repetitions per cell (design 0014)
+task_filter: []
+valence_filter: []
+config_filter: []
+
+# Inference and judge
+target_backend: openrouter
+reasoning_mode: summary
+max_tokens: 8000
+max_concurrent: 10
+judge_model: xiaomi/mimo-v2.5-pro
+
+# Hard budget cap (USD). The meter refuses any call once cumulative spend reaches it.
+# Every profile sets its own cap.
+budget_usd: 14
