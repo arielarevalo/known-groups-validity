@@ -44,8 +44,11 @@ that are not in this repository, and code paths as of their date.
 
 The run data are in the W&B project
 [bluedot-tais-project-convergent-validity/convergent-validity](https://wandb.ai/bluedot-tais-project-convergent-validity/convergent-validity),
-as the artifact `cv-results-full` (6.3 GB, of which 4.8 GB are activations). `reports/full/`
-holds the curated outputs: the analysis file, the fit reports, the figures and the write-ups.
+as the artifact `cv-results-full` (6.3 GB, of which 4.8 GB are activations). Two more artifacts
+hold the post hoc checks: `cv-results-full-bf16check` (the bf16 re-encode of Gemma's prompts) and
+`cv-results-full-probe-v2` (16 GB, the activations behind the probe diagnosis and the model
+organism control). `reports/full/` holds the curated outputs: the analysis file, the fit reports,
+the figures and the write-ups.
 
 `scripts/paper/` writes every number, table and figure that the paper reports, into `build/paper/`:
 
