@@ -1,8 +1,9 @@
-# Known-groups validity is not enough for evaluation-awareness detectors
+# Known-groups validity might not be enough for evaluation-awareness detectors
 
-This repository holds the code and the results behind the paper "Known-groups validity is not
-enough for evaluation-awareness detectors" (Arevalo-Alvarado and Badilla-Olivas, Agent
-Evaluation Science symposium, Fall 2026). The paper itself is not in this repository. The
+This repository holds the code and the results behind the paper "Known-groups validity might
+not be enough for evaluation-awareness detectors" (Arevalo-Alvarado and Badilla-Olivas, Agent
+Evaluation Science symposium, Fall 2026). The preprint is in
+[`paper/known-groups-validity.pdf`](paper/known-groups-validity.pdf). The
 repository is the public release of the authors' working repository, and its history starts at
 that release.
 
