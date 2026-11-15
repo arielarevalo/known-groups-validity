@@ -1,0 +1,17 @@
+\begin{abstract}
+A model that recognises it is being tested may behave differently once deployed. Several
+detectors try to flag this evaluation awareness, and if they measure the same thing,
+they should agree. We analysed five detectors on Qwen 3.6 27B and three on Gemma 4 31B with
+EvalAwareBench, which adds test-like cues to otherwise unchanged prompts. Every analysed
+detector passes a known-groups check: it flags cued prompts more often. However,
+\cv{qwen/null/n} random directions in Qwen's activations pass it too after the same tuning as
+the activation probe. We then asked whether the detectors agree beyond the cues,
+comparing them only among prompts that carry the same cues (a post hoc analysis). There, self-report and third-person reach
+\cv{gemma/sr-tp/kappawithinfrac}\% (Gemma) and \cv{qwen/sr-tp/kappawithinfrac}\% (Qwen) of the
+highest Cohen's $\kappa$ their positive rates allow. That maximum is only
+\cv{gemma/sr-tp/kappawithinmax} on Gemma and \cv{qwen/sr-tp/kappawithinmax} on Qwen, so most of
+their disagreement comes from flagging at different rates. In contrast, among these prompts the Qwen activation probe
+agrees with none of the three other detectors it can be compared with, even though it passes
+the known-groups check. A known-groups check is therefore not enough to show that a detector
+measures evaluation awareness.
+\end{abstract}

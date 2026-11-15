@@ -1,11 +1,11 @@
 # Known-groups validity might not be enough for evaluation-awareness detectors
 
 This repository holds the code and the results behind the paper "Known-groups validity might
-not be enough for evaluation-awareness detectors" (Arevalo-Alvarado and Badilla-Olivas, Agent
-Evaluation Science symposium, Fall 2026). The preprint is in
-[`paper/known-groups-validity.pdf`](paper/known-groups-validity.pdf). The
-repository is the public release of the authors' working repository, and its history starts at
-that release.
+not be enough for evaluation-awareness detectors" (Arevalo-Alvarado and Badilla-Olivas, 2026),
+accepted at the Agent Evaluation Science symposium, Fall 2026. The preprint is in
+[`paper/known-groups-validity.pdf`](paper/known-groups-validity.pdf), and its LaTeX source is in
+`paper/`. The repository is the public release of the authors' working repository, and its
+history starts at that release.
 
 ## The paper in brief
 
@@ -29,6 +29,7 @@ adds test-like cues to otherwise unchanged prompts.
 
 | Path | What it is |
 |---|---|
+| `paper/` | The LaTeX source of the paper, with its numbers, tables and figures. `paper/README.md` gives the build commands. |
 | `reports/full/` | The full run: the analysis file, the fit reports, the figures, and the write-ups of the probe diagnosis and the organism control. |
 | `reports/pilot/` | The earlier pilot run on a smaller design. |
 | `docs/OVERVIEW.md` | A plain-language explainer of the experiment. |
@@ -51,7 +52,9 @@ hold the post hoc checks: `cv-results-full-bf16check` (the bf16 re-encode of Gem
 organism control). `reports/full/` holds the curated outputs: the analysis file, the fit reports,
 the figures and the write-ups.
 
-`scripts/paper/` writes every number, table and figure that the paper reports, into `build/paper/`:
+`scripts/paper/` writes every number, table and figure that the paper reports, into
+`paper/generated/` and `paper/figures/`. Those files are tracked, so the paper builds without
+the run data:
 
 ```
 uv run python -c "import wandb; wandb.Api().artifact('bluedot-tais-project-convergent-validity/convergent-validity/cv-results-full:latest', type='results').download(root='data/results/runs/full')"
@@ -60,7 +63,8 @@ uv run --no-project --with matplotlib==3.9.2 --with numpy python scripts/paper/m
 ```
 
 `make_numbers.py` also runs without the run data, from `reports/full/` alone. It then skips the
-numbers that need the rollouts and the activations.
+numbers that need the rollouts and the activations. Do not commit that output: the paper needs
+the full file.
 
 ## Names in the code
 
@@ -111,7 +115,8 @@ The full run cost $217.31 by the run meter, under an in-run cap of $300.
 | `src/*.py` | Thin entry points behind the console scripts. |
 | `config/` | Run profiles over `base.yaml`: `pilot`, `prefull` (the paid smoke), `full`, `smoke`. |
 | `notebooks/analysis.py` | The marimo analysis notebook: statistics, tables, figures, the W&B scorecard. |
-| `scripts/` | The paper's numbers and figures (`scripts/paper/`), the costed budget model, the throughput and re-encode benchmarks, the pre-launch check, report builders, and the post hoc diagnostics (`scripts/exploration/`). |
+| `paper/` | The LaTeX source of the paper, the generated numbers, tables and figures, and the AES template. |
+| `scripts/` | The paper's numbers, figures, check and arXiv archive (`scripts/paper/`), the costed budget model, the throughput and re-encode benchmarks, the pre-launch check, report builders, and the post hoc diagnostics (`scripts/exploration/`). |
 | `tests/unit/` | Fast, free, offline. `tests/e2e/` hits real services and is opt-in. |
 | `data/results/runs/<run_id>/` | Run output (gitignored): rollouts, detectors, the merged table, the ledgers, activations, analysis, figures. |
 | `reports/` | Curated deliverables, tracked. |
@@ -200,4 +205,7 @@ The code in this repository is released under the MIT License (`LICENSE`). The E
 benchmark is released under CC BY-NC 4.0, and every artifact derived from it inherits that
 restriction: the test fixtures under `tests/fixtures/`, the pilot report under `reports/pilot/`,
 and any run output that carries benchmark prompts or model reasoning about them. The
-`LICENSE` file lists these paths. Cite the benchmark and this repository with `CITATION.cff`.
+`LICENSE` file lists these paths. The paper under `paper/` is licensed CC BY 4.0, the licence of
+its arXiv version. The paper's template, fonts and bibliography style keep their own terms
+(`paper/licenses/`). Cite the benchmark and this repository with
+`CITATION.cff`.

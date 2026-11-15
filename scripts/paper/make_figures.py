@@ -8,10 +8,10 @@ Inputs (nothing else is read):
     reports/full/analysis.json
     reports/full/fit_gemma-4-31b.json   (opened to confirm it exists; no main-text figure draws it)
     reports/full/fit_qwen3.6-27b.json
-    build/paper/numbers.tex             (from scripts/paper/make_numbers.py; for kappamax, kappafrac and labels)
+    paper/generated/numbers.tex         (from scripts/paper/make_numbers.py; for kappamax, kappafrac and labels)
 
-Outputs: build/paper/figures/fig1.pdf, fig2.pdf, fig3.pdf. Fonts are embedded (Open Sans, from
-scripts/paper/fonts, SIL Open Font License).
+Outputs: paper/figures/fig1.pdf, fig2.pdf, fig3.pdf. Fonts are embedded (Open Sans, from
+paper/fonts, SIL Open Font License).
 With --preview DIR, a 200 dpi PNG of each figure is written there as well.
 
 Every drawn or printed number comes from those files at run time. Where a printed number also
@@ -39,9 +39,10 @@ from matplotlib.transforms import blended_transform_factory  # noqa: E402
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 REPORTS = ROOT / "reports" / "full"
-FIGDIR = ROOT / "build" / "paper" / "figures"
-FONTDIR = HERE / "fonts"
-NUMBERS = ROOT / "build" / "paper" / "numbers.tex"
+PAPER = ROOT / "paper"
+FIGDIR = PAPER / "figures"
+FONTDIR = PAPER / "fonts"
+NUMBERS = PAPER / "generated" / "numbers.tex"
 
 # Palette (ink and secondary match the paper template's body and secondary colours).
 INK = "#111318"

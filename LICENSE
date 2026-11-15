@@ -37,3 +37,25 @@ use with attribution, wherever it appears in this repository:
 
 The MIT grant does not extend to any of the above. See CITATION.cff for the
 citation of the benchmark.
+
+The paper
+
+The MIT grant does not cover the paper under paper/. The text, tables and
+figures of the paper (paper/main.tex, paper/sections/, paper/generated/,
+paper/figures/ and paper/references.bib) are licensed under Creative Commons
+Attribution 4.0 International (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/), the licence of the arXiv
+version of the paper. Copyright (c) 2026 Ariel Arevalo-Alvarado and Antonio
+Badilla-Olivas.
+
+The paper uses the LaTeX template of the Agent Evaluation Science (AES)
+symposium. These files are not ours and keep their own terms, which
+paper/licenses/THIRD-PARTY-NOTICES.md states:
+
+  - paper/aes.sty, paper/docs/   the AES template, MIT License, copyright
+                                 agent-evalscience (paper/licenses/LICENSE-AES-TEMPLATE)
+  - paper/fonts/                 Open Sans, SIL Open Font License 1.1
+  - paper/aes-author-year.bst    LaTeX Project Public License
+
+The paper does not carry the AES mark, and this repository grants no licence
+to the AES name or mark.

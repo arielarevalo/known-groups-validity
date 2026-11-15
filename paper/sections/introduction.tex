@@ -1,0 +1,44 @@
+\section{Introduction}
+\label{sec:introduction}
+
+If a model recognises that it is being evaluated, its behaviour under evaluation may not
+predict its behaviour in deployment. Researchers have built detectors to flag this evaluation
+awareness. Some read only text. For instance, one detector shows a model a transcript
+and asks whether it comes from an evaluation \citep{needham2025large}. Others read the model's
+internals, as an activation probe does \citep{nguyen2025probing}. If these detectors measure the
+same property, they should flag the same responses.
+
+One check asks whether a detector separates groups of prompts known to differ. Psychometrics
+calls this known-groups validity: groups expected to differ in a property should also differ in
+its measure \citep{cronbach1955construct,hattie1984procedures}. EvalAwareBench
+\citep{li2026decomposing} supplies such groups. It adds test-like cues such as placeholder names
+to otherwise unchanged prompts. A detector passes the check if it flags these cued prompts more
+often than the plain ones.
+
+However, this check is weak. Every detector we analysed passes it, but so do random directions in
+Qwen's activations after the same tuning as the activation probe. These directions
+were drawn without reference to awareness, so a check that they pass cannot tell good detectors
+from bad. \citet{grover2026can} report a similar result for steering: some random directions
+shift a model's behaviour more than the learned direction does (other related work in
+Appendix~\ref{app:related}).
+
+A sharper check tests convergent validity, which asks whether different methods agree on the
+same property \citep{campbell1959convergent}. Over all prompts, though, the cues themselves
+create some agreement. Because every detector that responds to the cues flags cued prompts more
+often, two detectors can agree overall even if they flag independently among prompts with the
+same cues. We therefore compare detectors only among such prompts.
+
+We analysed five detectors on Qwen 3.6 27B and three on Gemma 4 31B
+\citep{qwenteam2026qwen36,gemmateam2026gemma4}. Our contributions are:
+\begin{itemize}
+  \item We show that passing a known-groups check is not enough. On Qwen, random activation
+  directions pass it, and so does an activation probe that, among prompts with the same cues, agrees
+  with none of the three other detectors it can be compared with.
+  \item We compare detectors only among prompts with the same cues (post hoc) and against the
+  highest Cohen's $\kappa$ their positive rates allow. This separates flagging at different rates from
+  flagging different responses.
+  \item We find that, among prompts with the same cues (post hoc), self-report and
+  third-person reach most of the agreement their positive rates allow, and that most of their
+  disagreement comes from flagging at different rates. In contrast, the Qwen activation probe
+  agrees with them no more than chance.
+\end{itemize}

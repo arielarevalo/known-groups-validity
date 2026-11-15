@@ -1,0 +1,14 @@
+\section{Limitations}
+\label{sec:limitations}
+
+No detector is checked against human labels. Instead, the cue label is our only reference, and
+it is a proxy: a model can miss a cue or suspect a test without one, and a task's safety variant
+can read as a test. Like the benchmark, we presume that the cues describe what evaluation
+prompts look like, and we use no production traces. In addition, the probe's layer is tuned on cues F1 to F7, which are also the
+cues that measure its response. The stratified analyses are post hoc, and most cued Qwen
+rollouts carry several cues (\cv{design/expB} multi-cue of \cv{qwen/cuedrollouts} cued
+rollouts). On Qwen, the chat template drops the reasoning trace from self-report's conversation,
+so there self-report reads the same text as third-person (Appendix~\ref{app:detectors}). We
+also did not check that feeding the saved rollouts back through the model reproduces the internal
+values it had while generating them. Finally, the scope is two models, one
+benchmark and \cv{design/reps} repetitions per prompt.

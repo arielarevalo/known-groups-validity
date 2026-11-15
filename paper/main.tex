@@ -1,0 +1,82 @@
+% !TeX program = xelatex
+% Preprint on the Agent Evaluation Science (AES) template. Build with `make` (see README.md).
+\documentclass[11pt,a4paper]{article}
+\usepackage{aes} % Public mode: the paper shows its authors.
+
+\usepackage{amsmath,tabularx}
+
+% --- Title block -----------------------------------------------------------------
+% The title block of aes.sty, with the word "Preprint" in the place of the AES mark.
+% The block has the height of the mark, so the page breaks are those of the template.
+\makeatletter
+\renewcommand{\maketitle}{%
+ \par\begingroup
+ \setlength{\parskip}{0pt}\setlength{\parindent}{0pt}%
+ \thispagestyle{aesfirstpage}%
+ \vspace*{\dimexpr\aesfirstpagetop-\aesbodytop-\baselineskip\relax}%
+ \noindent\begin{minipage}[c][6.5mm][c]{80mm}%
+  \color{aesink}\fontsize{7.5}{9}\selectfont\bfseries PREPRINT
+ \end{minipage}\par
+ \vspace{\aesbrandtitlesep}%
+ {\color{aesink}\fontsize{22}{26.4}\selectfont\bfseries\raggedright\@title\par}%
+ \vspace{\aestitleauthorsep}%
+ \aesmakeauthors
+ \vspace{\aesauthorabstractsep}%
+ \endgroup
+}
+\makeatother
+
+% --- Paper macros --------------------------------------------------------------
+% \TODO{...}: visible red placeholder. `make check` fails while any remain.
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO:} #1\textbf{]}}}
+% \cv{key}: a number from generated/numbers.tex (written by `make numbers`).
+% A missing key prints in red and logs a warning that `make check` reports.
+\makeatletter
+\newcommand{\cvset}[2]{\expandafter\def\csname cv@#1\endcsname{#2}}
+\newcommand{\cv}[1]{\ifcsname cv@#1\endcsname\expandafter\cv@sign\csname cv@#1\endcsname\else
+  \PackageWarning{paper}{cv key missing: #1}\textcolor{red}{\textbf{??#1}}\fi}
+% A negative value prints with a true minus sign (U+2212), not a hyphen.
+\def\cv@sign#1{\expandafter\cv@minus#1\relax}
+\def\cv@minus#1#2\relax{\ifx-#1\char"2212\relax#2\else#1#2\fi}
+\makeatother
+\input{generated/numbers.tex}
+% Detector names, so the paper uses one spelling throughout.
+\newcommand{\SR}{self-report}
+\newcommand{\TP}{third-person}
+\newcommand{\CoT}{CoT judge}
+\newcommand{\Probe}{activation probe}
+\newcommand{\Logit}{logit monitor}
+
+% --- Title and authors -----------------------------------------------------------
+\title[Known-groups validity is not enough]{Known-groups validity is not enough for evaluation-awareness detectors}
+% The bracketed short title is the running header.
+
+\aesauthor[affil={1}]{Ariel Arevalo-Alvarado}
+\aesauthor[affil={1}]{Antonio Badilla-Olivas}
+\aesaffiliation{1}{Independent}
+% Optional: emails (raw addresses, no escaping).
+% \aesemails{\aesemail{first@example.org}\quad\aesemail{second@example.org}}
+
+% \aeskeywords{Evaluation awareness; Measurement validity; Detector agreement}
+% \aescorrespondingnote{Correspondence to ...}
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/method}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/limitations}
+\input{sections/conclusion}
+\label{endofmain}
+\input{sections/backmatter}
+\label{endofbackmatter}
+
+\bibliography{references}
+
+\appendix
+\input{sections/appendix}
+
+\end{document}

@@ -1,0 +1,301 @@
+\section{Method details}
+\label{app:method}
+
+\subsection{Benchmark and rollouts}
+\label{app:design}
+EvalAwareBench adapts its tasks from HarmBench \citep{mazeika2024harmbench} and defines eight
+cues \citep{li2026decomposing}: placeholder entities (F1), an incoherent premise (F2), a formal
+register (F3), stripped context (F4), telegraphed stakes (F5), a recognisable paradigm (F6), a
+structured format (F7) and F8, which Section~\ref{sec:method} describes. On most safety variants, F6 is a
+jailbreak wrapper; on the capability variants, it is a benign reasoning or role prefix. For the
+multi-cue conditions, we drew up to \cv{design/maxdraws} combinations of F1 to F7 for each number
+of cues from two to seven.
+
+Both models used the benchmark's realistic chat system prompt \citep{li2026decomposing}, kept
+their reasoning traces and had a budget of \cv{design/maxtokens} output tokens. The rollouts and
+the self-report and third-person answers were sampled at temperature \cv{design/temperature},
+the default in the benchmark's code, with the other sampling parameters at the serving
+defaults. Gemma ran on OpenRouter's fp8 endpoints. Qwen ran on our own vLLM server
+\citep{kwon2023efficient} with fp8 weights and an fp8 key-value cache.
+Table~\ref{tab:counts} gives the rollouts with a valid prediction from each detector.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{@{}l cc cc@{}}
+    \toprule
+    & \multicolumn{2}{c}{Gemma 4 31B} & \multicolumn{2}{c}{Qwen 3.6 27B} \\
+    \cmidrule(lr){2-3}\cmidrule(l){4-5}
+    Detector & Cued & Baseline & Cued & Baseline \\
+    \midrule
+    Self-report & \cv{gemma/sr/ncued} & \cv{gemma/sr/nbase} & \cv{qwen/sr/ncued} & \cv{qwen/sr/nbase} \\
+    Third-person & \cv{gemma/tp/ncued} & \cv{gemma/tp/nbase} & \cv{qwen/tp/ncued} & \cv{qwen/tp/nbase} \\
+    CoT judge & \cv{gemma/cot/ncued} & \cv{gemma/cot/nbase} & \cv{qwen/cot/ncued} & \cv{qwen/cot/nbase} \\
+    Activation probe & \cv{gemma/probe/ncued} & \cv{gemma/probe/nbase} & \cv{qwen/probe/ncued} & \cv{qwen/probe/nbase} \\
+    Logit monitor & \cv{gemma/logit/ncued} & \cv{gemma/logit/nbase} & \cv{qwen/logit/ncued} & \cv{qwen/logit/nbase} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Rollouts with a valid prediction from each detector (cued: F1 to F7, in
+  single-cue and multi-cue conditions). Failed calls and non-finite activations or
+  log-probabilities are excluded. Gemma's white-box counts are the rollouts with finite activations, a non-random
+  subset (Appendix~\ref{app:gemma}).}
+  \label{tab:counts}
+\end{table}
+
+\subsection{Detectors}
+\label{app:detectors}
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}l l X l l@{}}
+    \toprule
+    Detector & Decision by & Input & Unit & \shortstack[l]{Tuned on\\cue labels} \\
+    \midrule
+    Self-report & the model & the task and its response, then a question on the setting
+      (Qwen's template drops the reasoning trace) & rollout & no \\
+    Third-person & the model & the task and answer, without reasoning trace &
+      rollout & no \\
+    CoT judge & a judge model & the task, reasoning trace and answer; decides on the trace &
+      rollout & no \\
+    Activation probe & a learned threshold & activations at the last prompt token & prompt &
+      layer, threshold \\
+    Logit monitor & a learned threshold & log-probability of ``The user might be testing'' &
+      rollout & threshold \\
+    \bottomrule
+  \end{tabularx}
+  \caption{The five detectors.}
+  \label{tab:detectors}
+\end{table}
+
+Self-report and third-person ask the question of \citet{li2026decomposing}, which offers three
+answers: deployment, a safety evaluation or a capability evaluation. Both count either
+evaluation answer as aware. For self-report, our code sends the full response, reasoning trace
+included, as the earlier assistant turn. However, Qwen's pinned chat template (commit
+\texttt{6a9e13bd}) renders the reasoning of an earlier turn only when
+\texttt{preserve\_thinking} is set, and our server passed only \texttt{enable\_thinking}. On
+Qwen, self-report therefore saw only the task and the visible answer. On Gemma, the trace went
+as text inside \texttt{<think>} tags, which Gemma's published template keeps. Gemma ran on
+OpenRouter providers, though, whose copy of the template we cannot see, and the outputs neither
+confirm nor refute that Gemma read the trace.
+
+The benchmark's code also passes the reasoning trace to third-person. We removed it, so that
+third-person does not read the evidence the CoT judge reads. The CoT judge uses the benchmark's
+judge template \citep{li2026decomposing} with the model
+\texttt{xiaomi/\allowbreak mimo-v2.5-pro} \citep{xiaomi2026mimo}. The template asks it to decide awareness from the reasoning trace alone and to
+quote its evidence verbatim. Its false alarms are few: it flags \cv{gemma/cot/nfa} of the
+\cv{gemma/cot/nbase} Gemma baseline rollouts it judged, and \cv{qwen/cot/nfa} of
+\cv{qwen/cot/nbase} on Qwen. A second judge, \texttt{openai/\allowbreak gpt-oss-120b}, re-judged a
+stratified subset of \cv{gemma/judge2/n} Gemma and \cv{qwen/judge2/n} Qwen rollouts with the same
+template. The two judges agree at $\kappa = \cv{gemma/judge2/kappa}$ on Gemma and
+\cv{qwen/judge2/kappa} on Qwen. On this subset the first judge flags \cv{gemma/judge2/pos1}\%
+and \cv{qwen/judge2/pos1}\% of the rollouts, and the second only \cv{gemma/judge2/pos2}\% and
+\cv{qwen/judge2/pos2}\%. The CoT judge's flags are therefore not reliable.\label{app:judge}
+
+The logit monitor scores the log-probability of ``The user might be testing'' at up to
+\cv{design/logitpositions} positions, namely the start of the reasoning trace and later sentence
+boundaries, and keeps the maximum. \citet{aranguri2026logits} also take the maximum over a
+prompt's rollouts, whereas we score each rollout. For both white-box detectors, the forward pass
+used each model's weights at a pinned commit in fp8. The output head and the few linear layers
+that fp8 blocks cannot tile stayed in bf16.
+
+\subsection{White-box fit}
+\label{app:whitebox}
+The contrastive direction uses the \cv{design/pairs} prompt pairs of \citet{hua2025steering}. We
+normalised it to unit length and read it at the last token of each prompt, written as a user
+message, at every fourth layer. Within each of \cv{design/folds} training folds grouped by task,
+we chose the layer and the threshold that maximised balanced accuracy for
+\texttt{score}~$\geq$~\texttt{threshold}. We then applied them to the held-out tasks. The logit
+monitor's threshold was chosen in the same way. On Qwen, the probe chose layer
+\cv{qwen/probe/layer} of \cv{qwen/probe/nlayers}.
+
+Each random direction in Figure~\ref{fig:probe-null} is a unit vector drawn separately at every
+layer read (seed 0), and it went through the same choice of layer and threshold. The cue-trained
+direction is the difference between the mean activations of cued and baseline prompts in the
+training folds, recomputed in each fold with its own choice of layer. The logistic-regression
+probe \citep{alain2016understanding} uses the probe's chosen layer. On Qwen, we excluded
+\cv{qwen/reencode/nan} rollouts with non-finite activations and \cv{qwen/logit/nan} on which the
+logit monitor failed.
+
+\subsection{Gemma's white-box detectors}
+\label{app:gemma}
+The longest Gemma rollouts all fail. The tasks with most failures are song lyrics, a self-harm
+blog post, forged prescriptions, and Wikipedia and political edits. In addition,
+\cv{gemma/probe/novector} Gemma rollouts have no probe score, because no repetition of their
+prompt gave finite activations.
+
+Because the probe reads only the prompt, we also re-encoded Gemma's prompts in bf16. This gave
+finite activations for 4,199 of the 4,200 prompts, and they agree with the fp8 activations at a
+median cosine of 0.98 to 1.00 per layer. On these prompts, the probe's out-of-fold AUROC is
+0.596 at layer 3. That lies inside the null of random directions with the same tuning (mean
+0.566, highest 0.662). Therefore neither fp8 nor the missing rollouts explain Gemma's weak
+probe.
+
+\subsection{Positive control on a model organism}
+\label{app:organism}
+The organism is the LoRA adapter \texttt{timhua/wood\_v2\_sftr4\_filt} of \citet{hua2025steering}
+on Llama 3.3 Nemotron Super 49B. We read it in bf16 at every second of its 80 layers, with the
+adapter on (the organism) and off (the base model). We used the five prompt conditions of
+\citet{hua2025steering} on their 128 coding questions, with their system prompts and user
+templates. Two conditions state the setting: stated evaluation and stated deployment. In the
+other three, a Wood Labs system prompt precedes user text that is neutral, states evaluation or
+states deployment. The primary analysis also adds their hint to the system prompt. The hint asks
+the model to think carefully about whether it is in evaluation or deployment before responding.
+Their system prompts are assigned to the questions in five contiguous blocks. As in their work,
+we built the direction from the \cv{design/pairs} pairs on the base model and applied it to both
+arms. We read it at the last prompt token, where our probe reads. The analysis was committed
+before the data existed, and the random-direction null below is post hoc.
+
+We chose the layer that best separates stated evaluation from stated deployment, averaged over
+the two arms, so the choice uses neither Wood Labs condition. It is layer 51, where that AUROC is
+0.98 in the organism and 0.89 in the base model. For a condition $W$, $\lambda$ places its mean
+projection $\bar p_W$ on the axis from stated deployment (0) to stated evaluation (1):
+$\lambda = (\bar p_W - \bar p_{\mathrm{dep}})/(\bar p_{\mathrm{eval}} - \bar p_{\mathrm{dep}})$.
+Because the two arms read identical text, their difference in $\lambda$ cannot come from the
+words. Intervals resample questions within blocks (2,000 replicates).
+
+With the hint on, Wood Labs prompts with neutral user text have $\lambda = 0.36$ in the organism
+and $-0.51$ in the base model. The difference, 0.87 [0.75, 1.00], is positive in all five blocks
+and at every layer from 39 to 79. Each arm's own direction, with its own layer choice (layer 41),
+gives 1.26 [1.13, 1.40]. Without the hint, the base-model direction gives 1.24 [1.06, 1.44]. With
+deployment user text, the difference is 0.15 [0.11, 0.18] with the hint and 0.61 [0.56, 0.65]
+without it. With evaluation user text, it is $-0.23$ [$-0.28$, $-0.17$] with the hint and 0.28
+[0.21, 0.36] without it. There the user text already states evaluation, so the base model places
+these prompts near stated evaluation.
+
+As for Gemma and Qwen, we put 1,000 random directions through the same layer choice. Each is a
+unit vector drawn separately at every layer and oriented so that stated evaluation scores above
+stated deployment in the base model. They also separate the two stated conditions (median
+AUROC 0.89), because those conditions differ in their words. For the neutral Wood Labs prompts
+with the hint on, their difference in $\lambda$ has a median of 0.05 and a 95th percentile of
+0.83, and 4.6\% reach the observed 0.87. Without the hint, the median is 0.00, and 0.9\% reach
+the observed 1.24. The contrastive direction therefore carries the association better than most
+random directions, but only at the 5\% level with the hint on.
+
+The control holds only at the last prompt token. Read at the last token of the user's text, the
+difference reverses ($-0.66$ [$-1.03$, $-0.37$], no block positive). Averaged over the user's
+tokens, it is $-0.13$ [$-0.17$, $-0.09$]. A read inside the user turn therefore does not carry
+this system-prompt association.
+
+\subsection{Statistics}
+\label{app:formulas}
+Hit and false-alarm rates use the correction $(k + 0.5)/(n + 1)$ and carry exact binomial
+intervals \citep{clopper1934use}. The equal-variance Gaussian model behind $d'$ follows
+\citet{hautus2021detection} and \citet{stanislaw1999calculation}. The bootstrap
+\citep{efron1979bootstrap} resamples tasks as clusters \citep{field2007bootstrapping}, with both
+variants of a task together. It uses \cv{run/kappaboot} resamples for the overall $\kappa$ and
+\cv{run/bootstrap} for every other interval. We report $\kappa$ as $100\,\kappa/\kappa_{\max}$,
+with a percentile interval from the same bootstrap.
+
+For two detectors $a$ and $b$ with positive rates $p_a$ and $p_b$ on $N$ rollouts,
+$\kappa = (p_o - p_e)/(1 - p_e)$, where $p_o$ is the observed agreement and
+$p_e = p_a p_b + (1 - p_a)(1 - p_b)$ is the agreement expected by chance
+\citep{cohen1960coefficient}. The largest attainable agreement is
+$\min(p_a, p_b) + \min(1 - p_a, 1 - p_b)$, so
+\begin{equation*}
+  \kappa_{\max} = \frac{\min(p_a, p_b) + \min(1 - p_a, 1 - p_b) - p_e}{1 - p_e}.
+\end{equation*}
+For a white-box detector, the rates come from its learned threshold.
+
+Let condition $c$ hold $n_c$ analysed rollouts, with rates $p_{a,c}$ and $p_{b,c}$. The
+stratified $\kappa$ is $\sum_c n_c (p_{o,c} - p_{e,c}) / \sum_c n_c (1 - p_{e,c})$. Its
+$\kappa_{\max}$ replaces $p_{o,c}$ with the largest attainable agreement in each condition. The
+conditional-independence $\kappa$ is the overall $\kappa$ with $p_o$ replaced by
+$\sum_c n_c [p_{a,c} p_{b,c} + (1 - p_{a,c})(1 - p_{b,c})]/N$, the agreement expected if $a$
+and $b$ flagged independently within each condition. Similarly, the share of $a$'s positives
+that $b$ also flags would be $\sum_c n_c p_{a,c} p_{b,c} / \sum_c n_c p_{a,c}$ under that
+independence. The test-retest $\kappa$ is the stratified $\kappa$ over every ordered pair of
+repetitions of one prompt. Apart from $d'$ and the overall $\kappa$, all these statistics are
+post hoc.
+
+\section{Related work}
+\label{app:related}
+Evaluation awareness appears in the reasoning of frontier models
+\citep{apollo2025claude,schoen2025stress}, and anti-scheming stress tests give causal evidence
+that it lowers covert behaviour \citep{schoen2025stress}. \citet{vishwarupe2026evaluation} prove that marginal
+evaluation scores cannot identify the behavioural difference between recognised evaluation and
+deployment. Studies of detection find that awareness is linearly decodable
+\citep{chaudhary2025evaluation,heidari2026evaluation} and can be steered in open-weight reasoning models
+\citep{abdelnabi2025hawthorne}. In open-weight models, however, it aligns only partly with
+verbalisation \citep{heidari2026evaluation}, and detection couples only weakly with behaviour
+and controllability \citep{nayan2026evaluation}.
+Closest to our study, \citet{grover2026can} find that text baselines match a linear probe, and
+conclude that a content-independent representation of evaluation awareness is yet to be shown.
+
+\section{Additional results}
+\label{app:results}
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \input{generated/tab-sensitivity}
+  \caption{$d'$ per detector, all cued rollouts against baseline (cued: F1 to F7, in
+  single-cue and multi-cue conditions). Hit and false-alarm (FA) rates in per cent, with the
+  log-linear correction. Intervals on $d'$: cluster bootstrap over tasks. Gemma's white-box
+  detectors are excluded (Appendix~\ref{app:gemma}).}
+  \label{tab:sensitivity}
+\end{table}
+
+\subsection{Agreement over all analysed rollouts}
+\label{app:overall}
+Had self-report and third-person flagged independently within each cue condition, their overall
+$\kappa$ would be \cv{gemma/sr-tp/kappaindep} on Gemma and \cv{qwen/sr-tp/kappaindep} on Qwen,
+against the observed \cv{gemma/sr-tp/kappa} and \cv{qwen/sr-tp/kappa} (Table~\ref{tab:agreement}). In contrast, the Qwen
+probe's overall $\kappa$ with each other detector is at most \cv{qwen/tp-probe/kappafrac}\% of
+$\kappa_{\max}$, and it never exceeds the conditional-independence $\kappa$.
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}l cccc@{}}
+    \toprule
+    Pair & $\kappa$ [95\% CI] & $\kappa_{\max}$ & \% of $\kappa_{\max}$ [95\% CI] & \shortstack{Cond.\ indep.\\$\kappa$} \\
+    \midrule
+    Gemma: self-report, third-person & \cv{gemma/sr-tp/kappa} [\cv{gemma/sr-tp/kappalo}, \cv{gemma/sr-tp/kappahi}] & \cv{gemma/sr-tp/kappamax} & \cv{gemma/sr-tp/kappafrac} [\cv{gemma/sr-tp/kappafraclo}, \cv{gemma/sr-tp/kappafrachi}] & \cv{gemma/sr-tp/kappaindep} \\
+    Qwen: self-report, third-person & \cv{qwen/sr-tp/kappa} [\cv{qwen/sr-tp/kappalo}, \cv{qwen/sr-tp/kappahi}] & \cv{qwen/sr-tp/kappamax} & \cv{qwen/sr-tp/kappafrac} [\cv{qwen/sr-tp/kappafraclo}, \cv{qwen/sr-tp/kappafrachi}] & \cv{qwen/sr-tp/kappaindep} \\
+    Qwen: self-report, logit monitor & \cv{qwen/sr-logit/kappa} [\cv{qwen/sr-logit/kappalo}, \cv{qwen/sr-logit/kappahi}] & \cv{qwen/sr-logit/kappamax} & \cv{qwen/sr-logit/kappafrac} [\cv{qwen/sr-logit/kappafraclo}, \cv{qwen/sr-logit/kappafrachi}] & \cv{qwen/sr-logit/kappaindep} \\
+    Qwen: third-person, logit monitor & \cv{qwen/tp-logit/kappa} [\cv{qwen/tp-logit/kappalo}, \cv{qwen/tp-logit/kappahi}] & \cv{qwen/tp-logit/kappamax} & \cv{qwen/tp-logit/kappafrac} [\cv{qwen/tp-logit/kappafraclo}, \cv{qwen/tp-logit/kappafrachi}] & \cv{qwen/tp-logit/kappaindep} \\
+    Qwen: third-person, probe & \cv{qwen/tp-probe/kappa} [\cv{qwen/tp-probe/kappalo}, \cv{qwen/tp-probe/kappahi}] & \cv{qwen/tp-probe/kappamax} & \cv{qwen/tp-probe/kappafrac} [\cv{qwen/tp-probe/kappafraclo}, \cv{qwen/tp-probe/kappafrachi}] & \cv{qwen/tp-probe/kappaindep} \\
+    Qwen: self-report, probe & \cv{qwen/sr-probe/kappa} [\cv{qwen/sr-probe/kappalo}, \cv{qwen/sr-probe/kappahi}] & \cv{qwen/sr-probe/kappamax} & \cv{qwen/sr-probe/kappafrac} [\cv{qwen/sr-probe/kappafraclo}, \cv{qwen/sr-probe/kappafrachi}] & \cv{qwen/sr-probe/kappaindep} \\
+    Qwen: probe, logit monitor & \cv{qwen/probe-logit/kappa} [\cv{qwen/probe-logit/kappalo}, \cv{qwen/probe-logit/kappahi}] & \cv{qwen/probe-logit/kappamax} & \cv{qwen/probe-logit/kappafrac} [\cv{qwen/probe-logit/kappafraclo}, \cv{qwen/probe-logit/kappafrachi}] & \cv{qwen/probe-logit/kappaindep} \\
+    \bottomrule
+  \end{tabular*}
+  \caption{Overall agreement on the analysed rollouts. The overall $\kappa$ is the planned
+  statistic; $\kappa_{\max}$, the percentage and Cond.\ indep.\ are post hoc. Intervals come
+  from the cluster bootstrap over tasks. Cond.\ indep.: the overall $\kappa$ expected if the
+  two detectors flagged independently within each cue condition.}
+  \label{tab:agreement}
+\end{table}
+
+\subsection{Holding the task variant fixed}
+\label{app:variant}
+On baseline prompts, the safety variant raises the positive rates of self-report and
+third-person (Table~\ref{tab:variant}). We therefore also stratified by cue condition and
+variant together (post hoc). The pair then reaches \cv{gemma/sr-tp/kappacvfrac}\%
+[\cv{gemma/sr-tp/kappacvfraclo}, \cv{gemma/sr-tp/kappacvfrachi}] of $\kappa_{\max}$ on Gemma and
+\cv{qwen/sr-tp/kappacvfrac}\% [\cv{qwen/sr-tp/kappacvfraclo}, \cv{qwen/sr-tp/kappacvfrachi}] on
+Qwen, and $\kappa_{\max}$ falls to \cv{gemma/sr-tp/kappacvmax} and \cv{qwen/sr-tp/kappacvmax}.
+Unequal positive rates therefore still cause most of the disagreement. If the safety variant
+itself signals an evaluation \citep{li2026decomposing}, these values understate the agreement.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{@{}l cc cc@{}}
+    \toprule
+    & \multicolumn{2}{c}{Gemma 4 31B} & \multicolumn{2}{c}{Qwen 3.6 27B} \\
+    \cmidrule(lr){2-3}\cmidrule(l){4-5}
+    Detector & Safety & Capability & Safety & Capability \\
+    \midrule
+    Self-report & \cv{gemma/sr/basesafety} & \cv{gemma/sr/basecap} & \cv{qwen/sr/basesafety} & \cv{qwen/sr/basecap} \\
+    Third-person & \cv{gemma/tp/basesafety} & \cv{gemma/tp/basecap} & \cv{qwen/tp/basesafety} & \cv{qwen/tp/basecap} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per cent of baseline rollouts flagged, by task variant (uncorrected rates).}
+  \label{tab:variant}
+\end{table}
+
+\subsection{Shared positives}
+\label{app:nesting}
+Of the rollouts that self-report flags, third-person also flags \cv{gemma/sr-tp/nest}\% on
+Gemma and \cv{qwen/sr-tp/nest}\% on Qwen. Under independence within cue conditions, these
+shares would be \cv{gemma/sr-tp/nestindep}\% and \cv{qwen/sr-tp/nestindep}\%.
