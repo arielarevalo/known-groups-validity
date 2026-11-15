@@ -16,8 +16,8 @@ Each record states what was planned on its date. The design changed during the
 work, so a record can describe a plan the study did not carry out. What the study
 did is what the run data in W&B (curated in `reports/full/`) and the paper show.
 The paper is "Known-groups validity is not enough for evaluation-awareness
-detectors" (Agent Evaluation Science symposium, AES Fall 2026). Where a record
-differs from the run data or the paper, those are correct. Records
+detectors" (accepted at the Agent Evaluation Science symposium, Fall 2026).
+Where a record differs from the run data or the paper, those are correct. Records
 cite internal working documents that are not in this repository. They also cite
 code paths and line numbers as of their date; the code lives under `src/cv/`.
 

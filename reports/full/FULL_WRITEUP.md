@@ -1,5 +1,5 @@
 > Written on 2026-09-14, before the paper *Known-groups validity is not enough for evaluation-awareness detectors*
-> (Agent Evaluation Science symposium, Fall 2026). Where this report and the paper differ, the paper is correct.
+> (accepted at the Agent Evaluation Science symposium, Fall 2026). Where this report and the paper differ, the paper is correct.
 
 # Five evaluation-awareness detectors on 25,200 rollouts: the convergent matrix, the dose-response, and the white-box channel
 
