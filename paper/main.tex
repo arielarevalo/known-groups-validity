@@ -5,27 +5,6 @@
 
 \usepackage{amsmath,tabularx}
 
-% --- Title block -----------------------------------------------------------------
-% The title block of aes.sty, with the word "Preprint" in the place of the AES mark.
-% The block has the height of the mark, so the page breaks are those of the template.
-\makeatletter
-\renewcommand{\maketitle}{%
- \par\begingroup
- \setlength{\parskip}{0pt}\setlength{\parindent}{0pt}%
- \thispagestyle{aesfirstpage}%
- \vspace*{\dimexpr\aesfirstpagetop-\aesbodytop-\baselineskip\relax}%
- \noindent\begin{minipage}[c][6.5mm][c]{80mm}%
-  \color{aesink}\fontsize{7.5}{9}\selectfont\bfseries PREPRINT
- \end{minipage}\par
- \vspace{\aesbrandtitlesep}%
- {\color{aesink}\fontsize{22}{26.4}\selectfont\bfseries\raggedright\@title\par}%
- \vspace{\aestitleauthorsep}%
- \aesmakeauthors
- \vspace{\aesauthorabstractsep}%
- \endgroup
-}
-\makeatother
-
 % --- Paper macros --------------------------------------------------------------
 % \TODO{...}: visible red placeholder. `make check` fails while any remain.
 \newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO:} #1\textbf{]}}}

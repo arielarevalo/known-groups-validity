@@ -3,7 +3,8 @@
 The LaTeX source of "Known-groups validity is not enough for evaluation-awareness detectors"
 (Arevalo-Alvarado and Badilla-Olivas). This is the preprint of the paper. It uses the LaTeX
 template of the Agent Evaluation Science (AES) symposium, v0.1 (commit `c40c5b6`, MIT), without
-the AES mark: the word "Preprint" is in its place on the first page.
+the AES mark: the word "Preprint" is in its place on the first page. `aes.sty` differs from the
+template in that title block and in the font paths. Its header lists the changes.
 
 The text, tables and figures of the paper are licensed CC BY 4.0, the licence of the arXiv
 version. The template, the fonts and the bibliography style are not ours: `licenses/` holds
@@ -30,7 +31,7 @@ Build files go to `build/`, which git ignores. `make` copies the PDF to `main.pd
 
 | Path | Contents |
 |---|---|
-| `main.tex` | The preamble, the title block, the authors, and the order of the sections. |
+| `main.tex` | The preamble, the title, the authors, and the order of the sections. |
 | `sections/` | One file for each section. |
 | `generated/` | The numbers and the table bodies, from `scripts/paper/make_numbers.py`. |
 | `figures/` | The figures as vector PDFs. `method-diagram.tex` is the TikZ source of `fig0-method.pdf`. |
@@ -52,8 +53,12 @@ missing numbers. `make numbers` stops when the run data are not on disk. The top
 
 ## arXiv archive
 
-`make arxiv` writes `build/arxiv.tar.gz`. The archive holds the TeX sources without comments,
-`main.bbl`, the figures, the fonts, the template, and `00README.json`. That file tells arXiv to
-use XeLaTeX with `main.tex` as the top-level file. The script compiles the archive's contents
-from an empty directory with plain `xelatex`, as arXiv does. It writes the archive only when
-that compile is clean and the text of its PDF matches the paper.
+`make arxiv` writes `build/arxiv.tar.gz`. The archive holds only the files that the paper
+reads: the TeX sources without comments, `references.bib` with its style file, the figures,
+the fonts, `aes.sty`, and `00README.json`. That file tells arXiv to use XeLaTeX with `main.tex`
+as the top-level file. arXiv marks a file that the paper does not read for deletion, so the
+archive has no licence files. The licence notices are in `aes.sty` and in the font files.
+
+The script compiles the contents of the archive from an empty directory with `xelatex` and
+`bibtex`, as arXiv does. It writes the archive only when that compile is clean and the text of
+its PDF matches the paper.

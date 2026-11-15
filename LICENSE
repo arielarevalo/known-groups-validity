@@ -53,7 +53,8 @@ symposium. These files are not ours and keep their own terms, which
 paper/licenses/THIRD-PARTY-NOTICES.md states:
 
   - paper/aes.sty, paper/docs/   the AES template, MIT License, copyright
-                                 agent-evalscience (paper/licenses/LICENSE-AES-TEMPLATE)
+                                 agent-evalscience (paper/licenses/LICENSE-AES-TEMPLATE);
+                                 aes.sty is modified, and its header lists the changes
   - paper/fonts/                 Open Sans, SIL Open Font License 1.1
   - paper/aes-author-year.bst    LaTeX Project Public License
 

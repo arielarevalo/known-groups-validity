@@ -1,12 +1,12 @@
 % Method schematic (prompts, rollouts, detectors, analyses), file fig0-method.pdf.
-% Build from paper/ so that fontspec's Path=fonts/ resolves, as in aes.sty:
+% Build from paper/ so that fontspec's Path=fonts/ resolves:
 %   xelatex -output-directory=<build dir> figures/method-diagram.tex
 % Natural width 16.6 cm, the A4 text width: include at width=\textwidth with no rescaling.
 % Strokes are inset from the bounding box so that none is clipped at the page edge.
 \RequirePackage{fix-cm}
 \documentclass[tikz]{standalone}
 \usepackage{fontspec}
-% Copied from aes.sty, lines 46 to 49.
+% The font family of aes.sty.
 \setmainfont{OpenSans}[
  Path=fonts/,Extension=.ttf,
  UprightFont=*-Regular,BoldFont=*-Bold,
@@ -20,7 +20,7 @@
 \DeclareMathSizes{8}{8}{7.5}{7}
 \DeclareMathSizes{7.5}{7.5}{7}{7}
 \usetikzlibrary{calc,arrows.meta,decorations.pathreplacing,patterns}
-% Colours copied from aes.sty, lines 53 to 58.
+% Colours copied from aes.sty.
 \definecolor{aesink}{HTML}{090C27}
 \definecolor{aespurple}{HTML}{6658E8}
 \definecolor{bodyink}{HTML}{111318}

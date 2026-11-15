@@ -1,3 +1,36 @@
+% aes.sty: the LaTeX style of the Agent Evaluation Science (AES) template, v0.1.
+%
+% Modified for this preprint by the authors of the paper, in two places:
+%   1. The fonts are loaded by file path, so that arXiv's file check finds them.
+%   2. The title block prints the word "Preprint" in the place of the AES mark.
+%
+% Open Sans (fonts/) is licensed under the SIL Open Font License 1.1,
+% https://openfontlicense.org. Each font file carries its copyright and licence notice.
+%
+% The licence of the template follows.
+%
+% MIT License
+%
+% Copyright (c) 2026 agent-evalscience
+%
+% Permission is hereby granted, free of charge, to any person obtaining a copy
+% of this software and associated documentation files (the "Software"), to deal
+% in the Software without restriction, including without limitation the rights
+% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+% copies of the Software, and to permit persons to whom the Software is
+% furnished to do so, subject to the following conditions:
+%
+% The above copyright notice and this permission notice shall be included in all
+% copies or substantial portions of the Software.
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+% SOFTWARE.
+
 \NeedsTeXFormat{LaTeX2e}[2020-10-01]
 \ProvidesPackage{aes}[2026/09/18 v0.1 Agent Evaluation Science]
 \newif\ifaes@classpublic
@@ -43,10 +76,18 @@
  headheight=12pt,headsep=14pt]{geometry}
 \raggedbottom % Keep local spacing stable; allow unequal bottom whitespace.
 \RequirePackage{fontspec}
-\setmainfont{OpenSans}[
- Path=fonts/,Extension=.ttf,
- UprightFont=*-Regular,BoldFont=*-Bold,
- ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic]
+% Each font is named by its file path. The family name is explicit because a path is
+% not a valid family name.
+\setmainfont{fonts/OpenSans-Regular.ttf}[
+ NFSSFamily=OpenSans,
+ BoldFont=fonts/OpenSans-Bold.ttf,
+ ItalicFont=fonts/OpenSans-Italic.ttf,
+ BoldItalicFont=fonts/OpenSans-BoldItalic.ttf]
+% These three faces are also declared one by one. The declarations have no effect on
+% the text. They name each font file as the main argument of a font command.
+\newfontface\aes@facebold{fonts/OpenSans-Bold.ttf}[NFSSFamily=OpenSansBold]
+\newfontface\aes@faceitalic{fonts/OpenSans-Italic.ttf}[NFSSFamily=OpenSansItalic]
+\newfontface\aes@facebolditalic{fonts/OpenSans-BoldItalic.ttf}[NFSSFamily=OpenSansBoldItalic]
 \newcommand{\regularfont}{\normalfont\mdseries}
 \RequirePackage[english]{babel}
 \RequirePackage{xcolor,graphicx,tcolorbox,etoolbox}
@@ -439,12 +480,10 @@
  \thispagestyle{aesfirstpage}%
  % Compensate the initial empty baseline introduced by starred vertical space.
  \vspace*{\dimexpr\aesfirstpagetop-\aesbodytop-\baselineskip\relax}%
- \noindent\begin{minipage}[c]{7.5mm}%
-  \includegraphics[width=6.5mm]{assets/aes-mark.pdf}%
- \end{minipage}\hspace{1.5mm}%
- \begin{minipage}[c]{72mm}%
-  \color{aesink}\fontsize{7.5}{9}\selectfont\bfseries
-  AGENT EVALUATION\\SCIENCE
+ % The word "Preprint" is in the place of the AES mark. The block has the height of
+ % the mark (6.5mm), so the page breaks are those of the template.
+ \noindent\begin{minipage}[c][6.5mm][c]{80mm}%
+  \color{aesink}\fontsize{7.5}{9}\selectfont\bfseries PREPRINT
  \end{minipage}\par
  \vspace{\aesbrandtitlesep}%
  {\color{aesink}\fontsize{22}{26.4}\selectfont\bfseries\raggedright\@title\par}%
