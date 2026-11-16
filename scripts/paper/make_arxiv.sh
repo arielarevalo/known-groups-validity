@@ -31,7 +31,10 @@ for f in sections/*.tex generated/numbers.tex generated/tab-sensitivity.tex; do 
 # The template, the bibliography, the figures and the fonts. arXiv prefers the .bib file
 # to a .bbl file and runs bibtex itself, with the .bst file from the archive. The licence
 # notices of the template and the fonts are in aes.sty and in the font files.
-cp aes.sty aes-author-year.bst references.bib "$STAGE/"
+cp aes.sty aes-author-year.bst "$STAGE/"
+# The bibliography goes without its comment lines and its `comment` fields. Those hold
+# the authors' notes on where each entry was checked, and BibTeX does not print them.
+sed -E -e '/^[[:space:]]*%/d' -e '/^[[:space:]]*comment[[:space:]]*=/d' references.bib > "$STAGE/references.bib"
 cp figures/fig0-method.pdf figures/fig1.pdf figures/fig2.pdf figures/fig3.pdf "$STAGE/figures/"
 cp fonts/*.ttf "$STAGE/fonts/"
 
