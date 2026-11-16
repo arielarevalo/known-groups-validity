@@ -1,10 +1,11 @@
 # Paper
 
-The LaTeX source of "Known-groups validity is not enough for evaluation-awareness detectors"
-(Arevalo-Alvarado and Badilla-Olivas). This is the preprint of the paper. It uses the LaTeX
+The LaTeX source of "Known-groups validity might not be enough for evaluation-awareness
+detectors" (Arevalo-Alvarado and Badilla-Olivas). This is the preprint of the paper, and
+`known-groups-validity.pdf` is its PDF. It uses the LaTeX
 template of the Agent Evaluation Science (AES) symposium, v0.1 (commit `c40c5b6`, MIT), without
-the AES mark: the word "Preprint" is in its place on the first page. `aes.sty` differs from the
-template in that title block and in the font paths. Its header lists the changes.
+the AES mark. `aes.sty` differs from the template in the title block and in the font paths.
+Its header lists the changes.
 
 The text, tables and figures of the paper are licensed CC BY 4.0, the licence of the arXiv
 version. The template, the fonts and the bibliography style are not ours: `licenses/` holds
@@ -25,7 +26,8 @@ pdfLaTeX. Run every command from `paper/`.
 | `make figures` | Writes `figures/fig1.pdf`, `fig2.pdf` and `fig3.pdf` again. |
 | `make clean` | Removes the build files. |
 
-Build files go to `build/`, which git ignores. `make` copies the PDF to `main.pdf`.
+Build files go to `build/`, which git ignores. `make` copies the PDF to `main.pdf`, which git
+also ignores. The tracked PDF is `known-groups-validity.pdf`.
 
 ## Layout
 

@@ -1,4 +1,4 @@
-> Written on 2026-10-18, before the paper *Known-groups validity is not enough for evaluation-awareness detectors*
+> Written on 2026-10-18, before the paper *Known-groups validity might not be enough for evaluation-awareness detectors*
 > (accepted at the Agent Evaluation Science symposium, Fall 2026). Where this report and the paper differ, the paper is correct.
 
 # Activation probe diagnosis, full run

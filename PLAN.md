@@ -1,6 +1,6 @@
 # Evaluation-awareness detectors: known groups and agreement within cue conditions
 
-The specification of the study behind the short paper "Known-groups validity is not enough for
+The specification of the study behind the short paper "Known-groups validity might not be enough for
 evaluation-awareness detectors" (accepted at the Agent Evaluation Science symposium, Fall 2026). We run
 **EvalAwareBench** through **two target models**, flag each rollout with up to **five
 detectors** (three text detectors and two white-box detectors), and score the detectors against

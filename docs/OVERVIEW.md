@@ -33,7 +33,7 @@ relation to awareness also passes it.
 ## What the study found
 
 The study ran five detectors on Qwen 3.6 27B and three on Gemma 4 31B, using the EvalAwareBench
-benchmark. The results match the short paper "Known-groups validity is not enough for
+benchmark. The results match the short paper "Known-groups validity might not be enough for
 evaluation-awareness detectors" (Arevalo-Alvarado and Badilla-Olivas, 2026), accepted at the
 Agent Evaluation Science symposium, Fall 2026.
 

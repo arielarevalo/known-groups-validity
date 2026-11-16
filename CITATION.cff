@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this repository, cite it and the EvalAwareBench benchmark it runs."
-title: "Known-groups validity is not enough for evaluation-awareness detectors"
+title: "Known-groups validity might not be enough for evaluation-awareness detectors"
 type: software
 authors:
   - family-names: "Arevalo-Alvarado"
