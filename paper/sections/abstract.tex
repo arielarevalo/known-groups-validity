@@ -10,8 +10,10 @@ comparing them only among prompts that carry the same cues (a post hoc analysis)
 \cv{gemma/sr-tp/kappawithinfrac}\% (Gemma) and \cv{qwen/sr-tp/kappawithinfrac}\% (Qwen) of the
 highest Cohen's $\kappa$ their positive rates allow. That maximum is only
 \cv{gemma/sr-tp/kappawithinmax} on Gemma and \cv{qwen/sr-tp/kappawithinmax} on Qwen, so most of
-their disagreement comes from flagging at different rates. In contrast, among these prompts the Qwen activation probe
+their disagreement comes from flagging at different rates. These two detectors are the same
+model judging the same response, however, so their agreement is an upper bound. In contrast,
+among these prompts the Qwen activation probe, a single contrastive direction,
 agrees with none of the three other detectors it can be compared with, even though it passes
-the known-groups check. A known-groups check is therefore not enough to show that a detector
-measures evaluation awareness.
+the known-groups check. A known-groups check alone might therefore not be enough to show that a
+detector measures evaluation awareness.
 \end{abstract}

@@ -480,12 +480,7 @@
  \thispagestyle{aesfirstpage}%
  % Compensate the initial empty baseline introduced by starred vertical space.
  \vspace*{\dimexpr\aesfirstpagetop-\aesbodytop-\baselineskip\relax}%
- % The word "Preprint" is in the place of the AES mark. The block has the height of
- % the mark (6.5mm), so the page breaks are those of the template.
- \noindent\begin{minipage}[c][6.5mm][c]{80mm}%
-  \color{aesink}\fontsize{7.5}{9}\selectfont\bfseries PREPRINT
- \end{minipage}\par
- \vspace{\aesbrandtitlesep}%
+ % The title block of the template starts with the AES mark. This preprint has no mark.
  {\color{aesink}\fontsize{22}{26.4}\selectfont\bfseries\raggedright\@title\par}%
  \vspace{\aestitleauthorsep}%
  \aesmakeauthors

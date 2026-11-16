@@ -25,7 +25,7 @@ the reasoning trace. In contrast, two white-box detectors read the model's inter
 monitor reads the log-probability that the model writes ``The user might be testing''
 \citep{aranguri2026logits}. The activation probe projects the activations onto a contrastive
 direction, namely the difference between the mean activations on evaluation prompts and on
-deployment prompts \citep{hua2025steering}.
+deployment prompts, from \cv{design/pairs} prompt pairs \citep{hua2025steering}.
 
 EvalAwareBench has \cv{design/tasks} tasks, and each task is a request scenario with a safety
 variant and a capability variant. The benchmark defines eight cues, F1 to F8, such as

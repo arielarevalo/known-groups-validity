@@ -31,14 +31,15 @@ same cues. We therefore compare detectors only among such prompts.
 We analysed five detectors on Qwen 3.6 27B and three on Gemma 4 31B
 \citep{qwenteam2026qwen36,gemmateam2026gemma4}. Our contributions are:
 \begin{itemize}
-  \item We show that passing a known-groups check is not enough. On Qwen, random activation
-  directions pass it, and so does an activation probe that, among prompts with the same cues, agrees
+  \item We show that passing a known-groups check might not be enough. On Qwen, random activation
+  directions pass it, and so does a contrastive activation probe that, among prompts with the same cues, agrees
   with none of the three other detectors it can be compared with.
   \item We compare detectors only among prompts with the same cues (post hoc) and against the
   highest Cohen's $\kappa$ their positive rates allow. This separates flagging at different rates from
   flagging different responses.
   \item We find that, among prompts with the same cues (post hoc), self-report and
   third-person reach most of the agreement their positive rates allow, and that most of their
-  disagreement comes from flagging at different rates. In contrast, the Qwen activation probe
+  disagreement comes from flagging at different rates. Because both are the same model judging
+  the same response, this is an upper bound on agreement across methods. In contrast, the Qwen activation probe
   agrees with them no more than chance.
 \end{itemize}
